@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { db } from "../app/firebaseConfig";
+
 import {
   View,
   Text,
@@ -9,15 +10,33 @@ import {
   StyleSheet,
 } from "react-native";
 
+import { collection, addDoc } from "firebase/firestore";
+
 export default function HomeScreen() {
   const [digimons, setDigimons] = useState([]);
   const [search, setSearch] = useState("");
+
+  const favoritesCollection = collection(db, "favorites");
 
   useEffect(() => {
     fetch("https://digimon-api.vercel.app/api/digimon")
       .then((res) => res.json())
       .then((data) => setDigimons(data));
   }, []);
+
+  async function saveFavorite(digimon: any) {
+    try {
+      await addDoc(favoritesCollection, {
+        name: digimon.name,
+        img: digimon.img,
+        level: digimon.level,
+      });
+
+      alert("Guardado en Firebase");
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   const filtered = digimons.filter((d: any) =>
     d.name.toLowerCase().includes(search.toLowerCase())
@@ -43,6 +62,10 @@ export default function HomeScreen() {
             <Image source={{ uri: item.img }} style={styles.image} />
             <Text style={styles.name}>{item.name}</Text>
             <Text>{item.level}</Text>
+
+            <Text style={styles.button} onPress={() => saveFavorite(item)}>
+              Guardar
+            </Text>
           </View>
         )}
       />
@@ -90,5 +113,16 @@ const styles = StyleSheet.create({
   name: {
     fontWeight: "bold",
     marginTop: 10,
+  },
+
+  button: {
+    backgroundColor: "#2563eb",
+    color: "white",
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    marginTop: 10,
+    overflow: "hidden",
+    fontWeight: "bold",
   },
 });
